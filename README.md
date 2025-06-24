@@ -184,44 +184,8 @@ Then to verify using DNs name
 ```
 
 ```
-# Ineterview FAQ
 
-# 🛠️ VPC Architecture for a 2-Tier Highly Available and Scalable Application
-# 📌 Design Overview
-In this scenario, we need to build a 2-tier architecture (Web + Application) that is highly available and scalable on AWS. Here’s how we would design the VPC architecture:
 
-✅ Key Components
-VPC with CIDR block (e.g., 10.0.0.0/16)
-
-Public Subnets (in 2 AZs)
-
-For Load Balancer
-
-Internet Gateway attached
-
-Private Subnets (in 2 AZs)
-
-For EC2 instances (App layer)
-
-Route through NAT Gateway in each AZ(The NAT Gateway allows outbound internet access from private instances without exposing them directly to inbound internet traffic)
-
-Auto Scaling Group in private subnets
-
-Target Group for ALB pointing to private EC2 instances
-
-Security Groups for secure access (HTTP, SSH via Bastion if needed)
-
-🖼️ Architecture Diagram
-⚙️ How It Works
-Users access the app via ALB in the public subnet.
-
-The ALB routes traffic to EC2 instances in private subnets via Target Groups.
-
-Auto Scaling ensures the EC2 instances scale based on load.
-
-Each AZ has its own NAT Gateway to allow private EC2s to access the internet (for updates, etc.).
-
-Resources are distributed across multiple Availability Zones for fault tolerance and high availability.
 
 
 
