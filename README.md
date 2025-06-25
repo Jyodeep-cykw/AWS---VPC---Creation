@@ -7,159 +7,231 @@ This project demonstrates a production-ready AWS VPC setup with public and priva
 
 
 # 1. Create VPC
+
 Select: VPC and more
-Auto-generate: aws-prod-example
 
-Pv4 CIDR block:cidr
+  Auto-generate: aws-prod-example (any name that you want)
+  
+  Pv4 CIDR block: Leave it the same (10.0.0.0/16)
+  
+  IPv6 CIDR block: No IPv6 CIDR Block
+  
+  Tenancy: default
+  
+  Number of Availability Zones (AZs): 2
+  
+  Number of public subnets: 2
+  
+  Number of private subnets: 2
+  
+  NAT gateways ($): 1 per AZ
+  
+  VPC endpoints: None
+  
+  Finally, Create a VPC
 
-IPv6 CIDR block: No IPv^ CIDR Block
 
-Tenancy : default
+# 2. Go to the Auto Scaling group in the EC2 section
 
-Number of Availability Zones (AZs): 2
+-Create an Auto Scaling group
 
-Number of public subnets:2
-
-Number of private subnets:2
-
-NAT gateways ($): 1 per AZ
-
-VPC endpoints: None
-
-Create VPC
-
-
-# 2. Go to Auto Scaling group 
--Create Auto Scaling group
+  Choose a name for the group (usually keep it the same as the VPC name to make it easier to delete after your done)
 
 -Create Launch Template
-Launch template name and description
 
-Template version description
+  Since we don't have a template, choose to create a template
 
-Launch template name - required
-: aws-prod-example
+  Launch template name and description (Same as the VPC)
+  
+  Template version description 
 
-Description: Proof of concept for app deployment
+  Check the Auto Scaling guidelines
 
-Recently launched: free tier eligible
+  Application and OS Images: Recently launched (Ubuntu version)
 
-Instance Type: (e.g., t2.micro)
+  Instance Type: t2.micro (free version)
 
-Key Pair: aws-login
+  Key pair name: Spring Boot Application
 
-Security Group: aws-prod-example
+  Subnet: don't include in template
 
-All traffic allowed (⚠️ for demo only — restrict in production)
+  Firewall: Create a new security group
 
-ssh one
+  Security group name: vpc name
 
-Custom TCP: Port 8000
+  Description
 
-VPC: aws-prod-example(custom created)--> # Create launch template
+  VPC: Select the VPC you created earlier
 
+  Security Rules:
 
+    Type                              Port Range                     Source Type
+    
+    Custom TCP                          8000                           Anywhere
 
-# 3. Auto Scaling Group
-Name: aws-prod-example
+    All Traffic                                                        Anywhere
 
-Launch Template: previously created
+      ssh                                                              Anywhere
 
-Availability Zones: private-subnet-1 & private-subnet-2 in us-east-1a and us-east-1b
-Next -> No load  balancer -->   next
+    Custom TCP                          80                             Anywhere
 
-Desired Capacity: 2
+  
+  Finally, Click on Create Launch Template
 
-Min Size: 1
+  
+- Go back to the Create Auto Scaling group
 
-Max Size: 4
+  Name: VPC name (any name that you want it to be)
+  
+  Launch Template: previously created
 
-Scaling Policies: None   then Next--> next -->Creat Auto Scaling group
+  Version: Default 1
+  
+  Next
 
-Two EC2 instances have been successfully created in the private subnets of the VPC.
-Both instances have private IP addresses and are not directly accessible from the internet.
-They are intended to be accessed via a bastion host.
+  Network ---> VPC: Pick the vpc that we created --->  Availability Zones: private-subnet-1 & private-subnet-2
 
-# 4. Create EC2 instance 
-Name: bastion-host
-slect: ubuntu
+  Availability Zones Distribution: Balanced best effort
 
-Key Pair: aws-login
-VPC: created one
+  Then click next
+  
+  Integrate with other services (Skip): Click next
 
-Security Group: allows SSH (port 22)
+  Configure Group size and scaling ---> Desired Capacity: 2 --->  Min Size: 1 and Max Size: 4 ----> Click Next
 
-Network Placement: Public subnet of same VPC
-
-public id: enable
-Launch instance
-
-Private EC2 instances that don’t have a key pair attached can't be accessed directly via SSH. However, there's a secure workaround: copy the bastion host’s .pem key into the private instance through an SCP command after SSH’ing into the bastion
-
-Connect using: Commandline 
-```
-scp -i xxx.pem C:/Users/xxxx/Downloads/xxx.pem ubuntu@publicIP:/home/ubuntu
-```
-# To verify the copied file
-```
-ssh -i aws-login.pem ubuntu@<Bastion-Public-IP>
-ls
-```
-```
-scp -i xxx.pem ubuntu@private-ip
-
-```
-Now I am able to login private instance as well
+  Add notifications: Click Skip to review
+ 
+  Scroll down and click on Create auto scaling group
+  
+  
+  Two EC2 instances have been successfully created in the private subnets of the VPC.
+  Both instances have private IP addresses and are not directly accessible from the internet.
+  They are intended to be accessed via a bastion host.
+  
 
 
-# 5. Deploy Static Web Page on Private EC2
-Connect via Bastion → Private IP
-vim index.html
+# 3. Create EC2 instance 
 
-Example content:
-<!DOCTYPE html>
-<html>
-<body>
-  <h1>First AWS PROJECT to Demonstrate apps in private subnet</h1>
-</body>
-</html>
-# Start simple Python web server:
-```
-python3 -m http.server 8000
-```
+  GO back to EC2 instance dashboard
+  
+  Click on instances 
+  
+  Click Create New Instance 
+  
+  Name: anyname
+  
+  Quick start: Ubuntu ---> AMI: Ubuntu (Free versions)
+  
+  Key Pair: SpringbootApplication
+  
+  VPC: created one
+  
+  Subnet: Any of the public subnets (1 or 2)
+  
+  Auto-assign public ID: enable
+  
+  Firewall ---> Select existing security group --> pick the security group that you created earlier
+  
+  Then launch the instance
+  
+  Private EC2 instances that don’t have a key pair attached can't be accessed directly via SSH. However, there's a secure workaround: copy the bastion host’s .pem key into the private instance through an SCP command after SSH’ing into the bastion
+  
+  Connect to it
+  
+  Connect using: Commandline from you pc
+  ```
+  scp -i xxx.pem C:/Users/xxxx/Downloads/xxx.pem ubuntu@publicIP:/home/ubuntu (windows)
+  ```
+  ```
+  scp -i xxx.pem ~/Downloads/xxx.pem ubuntu@publicIP:/home/ubuntu (Mac)
+  ```
+  
+  Then it will ask you to confirm it
+  
+  Now I am able to login private instance as well
+
+  To check if the file is in the server type in "ls"
+
+  This should show the .pem file
 
 
-# 6. Create load balancer
-Application Load Balancer (ALB)
-Name: aws-prod-example
+# 4. Deploy a Static Web Page on Private EC2
 
-Type: Internet-facing ALB
-Ipv4
+  We need to connect via Private IP
 
-VPC: aws-prod-example
+  ```
+  ssh -i xxx.pem ubuntu@private-ip
+  ```
+  
+  Then confirm it
 
-AZ/Subnets: Public subnet 1 and Public subnet2
+  then type 
+  ```
+  sudo apt update
+  ```
 
-Security Group: aws-prod-example
+  This should download python which will allow us to import / create new files
 
-Listener: HTTP on port 8000
+  For this example we will create a html file
 
-# Target Group:
-Create target group
+  First type vim index.html
 
-Target Type: Instance
+  Then paste this code or your code
+  ```
+  <!DOCTYPE html>
+  <html>
+  <body>
+    <h1>First AWS PROJECT to Demonstrate apps in private subnet</h1>
+  </body>
+  </html>
+  ```
 
-Name: aws-prod-example
+  Then, to run the server type this 
+  
+  ```
+  python3 -m http.server 8000
+  ```
 
-Port: 80
 
-Instances: Private EC2s (exclude bastion)
+# 5. Create load balancer and target groups
 
-Health Check: HTTP on /
-Next
-Select: two private instances which is created
-Created target group
+  Go to the sidebar and selectthe  target group
+  
+  Create a target group
+  
+  Target Type: Instances
+  
+  Name: any name
+  
+  Protocol: HTTP    Port: 8000
 
+  IP address: IPv4
+  
+  VPC: the instance we created earlier
+
+  
+  
+  Health Check: HTTP on /
+  Next
+  Select: two private instances which is created
+  Created target group
+
+  
+  Application Load Balancer (ALB)
+  Name: aws-prod-example
+  
+  Type: Internet-facing ALB
+  Ipv4
+  
+  VPC: aws-prod-example
+  
+  AZ/Subnets: Public subnet 1 and Public subnet2
+  
+  Security Group: aws-prod-example
+  
+  Listener: HTTP on port 8000
+
+  
 
 # 6. Create load balancer
 Application Load Balancer (ALB)
